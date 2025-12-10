@@ -1,0 +1,584 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>暗影矩阵 · 资源矩阵</title>
+    <style>
+        /* 基础样式 */
+        * {
+            box-sizing: border-box;
+        }
+        
+        body, html {
+            margin: 0;
+            padding: 0;
+            background-color: #000;
+            color: #00ff00;
+            font-family: 'Courier New', monospace;
+            overflow-x: hidden;
+            height: 100%;
+        }
+
+        /* 数字雨背景容器 */
+        #matrix-bg {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: -1;
+            background: #000;
+        }
+
+        #matrix-canvas {
+            width: 100%;
+            height: 100%;
+        }
+
+        /* 页面内容样式 */
+        .container {
+            position: relative;
+            z-index: 1;
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+
+        .header {
+            text-align: center;
+            margin-bottom: 30px;
+            border: 1px solid #00ff00;
+            padding: 20px;
+            background-color: rgba(0, 255, 0, 0.02);
+            margin-top: 20px;
+        }
+
+        .system-alert {
+            background-color: #000;
+            color: #00ff00;
+            padding: 20px;
+            font-family: 'Courier New', monospace;
+            border: 1px solid #00ff00;
+            margin-bottom: 20px;
+            text-align: center;
+        }
+
+        .resource-section {
+            background-color: #001100;
+            color: #00ff00;
+            padding: 15px;
+            border: 1px solid #00ff00;
+            margin-bottom: 15px;
+            font-family: 'Courier New', monospace;
+        }
+
+        .resource-title {
+            color: #00ffff;
+            font-size: 16px;
+            margin-bottom: 10px;
+        }
+
+        .resource-price {
+            color: #ffff00;
+            margin-bottom: 10px;
+        }
+
+        .resource-warning {
+            color: #00ffff;
+            margin-bottom: 15px;
+            font-size: 12px;
+        }
+
+        .access-btn {
+            background-color: #001100;
+            color: #00ff00;
+            border: 1px solid #00ff00;
+            padding: 5px 10px;
+            cursor: pointer;
+            font-family: 'Courier New', monospace;
+            margin-bottom: 15px;
+        }
+
+        .payment-modal {
+            display: none;
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background-color: #000;
+            color: #00ff00;
+            padding: 20px;
+            border: 2px solid #00ff00;
+            z-index: 1000;
+            width: 90%;
+            max-width: 800px;
+            max-height: 90vh;
+            overflow: auto;
+        }
+
+        .payment-modal h3 {
+            color: #00ffff;
+            margin-bottom: 10px;
+        }
+
+        .payment-modal p {
+            font-size: 11px;
+            margin-bottom: 20px;
+        }
+
+        .payment-options {
+            border-top: 1px solid #00ff00;
+            padding-top: 15px;
+            margin-bottom: 15px;
+        }
+
+        .payment-label {
+            color: #ffff00;
+            font-size: 12px;
+            margin-bottom: 5px;
+        }
+
+        /* 优化后的二维码占位符样式 */
+        .qr-placeholder {
+            text-align: center;
+            margin-bottom: 20px;
+            height: auto;
+            min-height: 120px;
+            border: 1px dashed #00ff00;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            padding: 10px;
+        }
+
+        /* 二维码图片样式优化 */
+        .qr-image {
+            max-width: 160px;
+            max-height: 160px;
+            width: auto;
+            height: auto;
+            border: 1px solid #333;
+            border-radius: 4px;
+            object-fit: contain;
+        }
+
+        /* 资源图片样式优化 */
+        .resource-image {
+            max-width: 100%;
+            height: auto;
+            border: 1px solid #333;
+            border-radius: 4px;
+            margin: 5px 0;
+            object-fit: contain;
+        }
+
+        .close-btn {
+            background-color: #001100;
+            color: #00ff00;
+            border: 1px solid #00ff00;
+            padding: 5px 15px;
+            cursor: pointer;
+            font-family: 'Courier New', monospace;
+            margin-top: 10px;
+        }
+
+        .footer {
+            text-align: center;
+            margin-top: 40px;
+            padding: 15px;
+            border-top: 1px solid #00ff00;
+            font-size: 14px;
+        }
+
+        .contact-info {
+            text-align: center;
+            margin-top: 20px;
+            padding: 10px;
+            border-top: 1px solid #00ff00;
+        }
+
+        .matrix-footer {
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            width: 100%;
+            background-color: #000;
+            color: #00ff00;
+            text-align: center;
+            padding: 5px;
+            font-size: 10px;
+            border-top: 1px solid #00ff00;
+            z-index: 2;
+        }
+
+        .warning-text {
+            color: #ff0000;
+            font-size: 10px;
+        }
+
+        /* 滚动条样式 */
+        ::-webkit-scrollbar {
+            width: 8px;
+        }
+
+        ::-webkit-scrollbar-track {
+            background: #001100;
+        }
+
+        ::-webkit-scrollbar-thumb {
+            background: #00ff00;
+            border-radius: 4px;
+        }
+
+        ::-webkit-scrollbar-thumb:hover {
+            background: #00ffff;
+        }
+
+        /* 内容区域样式，确保在数字雨之上 */
+        .content {
+            position: relative;
+            z-index: 2;
+            background-color: rgba(0, 0, 0, 0.8);
+            min-height: calc(100vh - 40px);
+            padding: 20px 0;
+        }
+
+        /* 图片容器样式 */
+        .image-container {
+            text-align: center;
+            margin: 10px 0;
+        }
+
+        .image-caption {
+            font-size: 10px;
+            color: #888;
+            margin-top: 5px;
+        }
+    </style>
+</head>
+<body>
+    <!-- 数字雨背景 -->
+    <div id="matrix-bg">
+        <canvas id="matrix-canvas"></canvas>
+    </div>
+
+    <!-- 页面内容 -->
+    <div class="content">
+        <div class="system-alert">
+            <span style="color: #ff0000;">SYSTEM ALERT:</span> 检测到意识连接... 神经接口同步率 97.3%... 资源矩阵已激活...
+        </div>
+        
+        <div class="container">
+            <div class="header">
+                <h1>暗影矩阵 · 资源矩阵</h1>
+                <p>欢迎进入数据深渊，探索被遗忘的代码圣殿</p>
+            </div>
+            
+            <div class="resource-section">
+                <div class="resource-title">▇▇▇ 矩阵核心协议 - Level Omega</div>
+                <div><strong>《极无双2英雄觉醒苹果IOS客户端密钥附加解密工具》</strong></div>
+                <div class="resource-price">◆ 数据价值: 99 信用点 ◆</div>
+                <div class="resource-warning">⚠️ 警告: 此工具可绕过苹果安全协议，解密官方加密密钥</div>
+                <br>
+                <button class="access-btn" onclick="showPaymentModal('payment1')">激活访问权限</button>
+                
+                <div id="payment1" class="payment-modal">
+                    <div style="text-align: center; margin-bottom: 20px;">
+                        <h3>《极无双2英雄觉醒苹果IOS客户端密钥附加解密工具》</h3>
+                        <p>◆ 数据价值: 99 信用点 ◆</p>
+                    </div>
+                    
+                    <div style="margin-bottom: 20px;">
+                        <p style="font-size: 11px; line-height: 1.4;">
+                            不含热更和ipa包，热更和ipa包你自己找
+                        </p>
+                        
+                        <!-- 优化后的图片展示 -->
+                        <div class="image-container">
+                            <img src="image/292574b9-312e-47ff-8033-659036ec83d3.png" alt="解密工具示例1" class="resource-image">
+                            <div class="image-caption">解密工具界面示例</div>
+                        </div>
+                        
+                        <div class="image-container">
+                            <img src="image/20251029234208602-image-1024x1021.png" alt="解密工具示例2" class="resource-image">
+                            <div class="image-caption">工具运行效果</div>
+                        </div>
+                        
+                        <p style="font-size: 11px; line-height: 1.4; margin-top: 15px;">
+                            解密工具使用说明：<br>
+                            • 兼容最新安全协议<br>
+                            • 一键生成有效密钥<br>
+                            • 支持批量处理<br><br>
+                            注意事项：使用前请备份设备数据，本工具仅供学习研究使用。
+                        </p>
+                    </div>
+                    
+                    <div class="payment-options">
+                        <p class="payment-label"><strong>选择支付方式：</strong></p>
+                        
+                        <div class="qr-placeholder">
+                            <span style="color: #00ffff;">[支付宝收款码]</span>
+                            <img src="image/05bca1f3662539d9378d337c823d4f5e_720.png" alt="支付宝收款码" class="qr-image">
+                        </div>
+                        
+                        <div class="qr-placeholder">
+                            <span style="color: #00ffff;">[微信支付码]</span>
+                            <img src="image/008716c4125ce6ff791eac98b77b202e.png" alt="微信支付码" class="qr-image">
+                        </div>
+                    </div>
+                    
+                    <div style="text-align: center; border-top: 1px solid #00ff00; padding-top: 10px;">
+                        <p style="font-size: 10px; color: #00ffff;">扫描上方二维码完成支付,完成支付后添加微信： YSZI2013 获取资源地址</p>
+                        <button class="close-btn" onclick="closePaymentModal('payment1')">关闭窗口</button>
+                    </div>
+                </div>
+                
+                <div class="warning-text">
+                    ⚠️ 本资源仅供技术研究，请勿用于商业用途 ⚠️
+                </div>
+            </div>
+            
+            <div class="resource-section">
+                <div class="resource-title">▇▇▇ 数据碎片 - Sector Alpha</div>
+                <div><strong>《极无双2英雄觉醒苹果IOS客户端文件+苹果热更新对位文件》</strong></div>
+                <div class="resource-price">◆ 数据价值: 200 信用点 ◆</div>
+                <div class="resource-warning">⚠️ 警告: 包含完整的iOS客户端文件和热更新匹配文件，可重建完整应用环境</div>
+                <br>
+                <button class="access-btn" onclick="showPaymentModal('payment2')">激活访问权限</button>
+                
+                <div id="payment2" class="payment-modal">
+                    <div style="text-align: center; margin-bottom: 20px;">
+                        <h3>《极无双2英雄觉醒苹果IOS客户端文件+苹果热更新对位文件》</h3>
+                        <p>◆ 数据价值: 200 信用点 ◆</p>
+                    </div>
+                    
+                    <div style="margin-bottom: 20px;">
+                        <p style="font-size: 11px; line-height: 1.4;">
+                            <!-- 优化后的图片展示 -->
+                            <div class="image-container">
+                                <img src="image/59a0024f-ed62-4b0f-8fa9-e55891c1a255.png" alt="客户端文件示例1" class="resource-image">
+                                <div class="image-caption">iOS客户端文件列表</div>
+                            </div>
+                            
+                            <div class="image-container">
+                                <img src="image/32b6fce5-503e-44b9-8b0a-67efc2fa8c90.png" alt="热更新文件示例" class="resource-image">
+                                <div class="image-caption">热更新对位文件</div>
+                            </div>
+                            
+                            文件包内容：<br>
+                            • 完整iOS客户端IPA文件<br>
+                            • 热更新对位文件套装<br>
+                            • 签名证书配置文件<br>
+                            • 部署脚本工具<br><br>
+                            技术等级：高级 | 适用人群：开发者/逆向工程师
+                        </p>
+                    </div>
+                    
+                    <div class="payment-options">
+                        <p class="payment-label"><strong>选择支付方式：</strong></p>
+                        
+                        <div class="qr-placeholder">
+                            <span style="color: #00ffff;">[支付宝收款码]</span>
+                            <img src="image/28e2ff3f53ef27e011e2b47d97875cd1_720.png" alt="支付宝收款码" class="qr-image">
+                        </div>
+                        
+                        <div class="qr-placeholder">
+                            <span style="color: #00ffff;">[微信支付码]</span>
+                            <img src="image/046a9778a699b44ea1dd7ecaf80f9b6f.png" alt="微信支付码" class="qr-image">
+                        </div>
+                    </div>
+                    
+                    <div style="text-align: center; border-top: 1px solid #00ff00; padding-top: 10px;">
+                        <p style="font-size: 10px; color: #00ffff;">扫描上方二维码完成支付,完成支付后添加微信： YSZI2013 获取资源地址</p>
+                        <button class="close-btn" onclick="closePaymentModal('payment2')">关闭窗口</button>
+                    </div>
+                </div>
+                
+                <div class="warning-text">
+                    ⚠️ 高级技术资源，使用需谨慎 ⚠️
+                </div>
+            </div>
+            
+            <div class="resource-section">
+                <div class="resource-title">▇▇▇ 核心母体 - Trinity Protocol</div>
+                <div><strong>《极无双2最新觉醒完整版双端（安卓+iOS）全套源码》</strong></div>
+                <div class="resource-price">◆ 数据价值: 600 信用点 ◆</div>
+                <div class="resource-warning">⚠️ 警告: 完整双端源码，包含所有核心功能和商业逻辑，价值连城</div>
+                <br>
+                <button class="access-btn" onclick="showPaymentModal('payment3')">激活访问权限</button>
+                
+                <div id="payment3" class="payment-modal">
+                    <div style="text-align: center; margin-bottom: 20px;">
+                        <h3>《极无双2最新觉醒完整版双端（安卓+iOS）全套源码》</h3>
+                        <p>◆ 数据价值: 600 信用点 ◆</p>
+                    </div>
+                    
+                    <div style="margin-bottom: 20px;">
+                        <p style="font-size: 11px; line-height: 1.4;">
+                            <!-- 优化后的图片展示 -->
+                            <div class="image-container">
+                                <img src="image/20251029154846585-4da750cbcbf915c63d70b0a972a4b78a.png" alt="源码示例1" class="resource-image">
+                                <div class="image-caption">Android源码结构</div>
+                            </div>
+                            
+                            <div class="image-container">
+                                <img src="image/20251029154853814-16f867e868ceb0deb8585fbfa068a882.png" alt="源码示例2" class="resource-image">
+                                <div class="image-caption">iOS源码结构</div>
+                            </div>
+                            
+                            <div class="image-container">
+                                <img src="image/01277a21-d574-466f-9847-6369b8b4b96a.png" alt="源码示例3" class="resource-image">
+                                <div class="image-caption">服务器架构</div>
+                            </div>
+                            
+                            源码包内容：<br>
+                            • 完整Android端源码<br>
+                            • 完整iOS端源码<br>
+                            • 服务器端核心代码<br>
+                            • 数据库结构设计<br>
+                            • API接口文档<br>
+                            • 部署配置文件<br><br>
+                            技术等级：大师级 | 适用人群：高级开发团队/公司级项目
+                        </p>
+                    </div>
+                    
+                    <div class="payment-options">
+                        <p class="payment-label"><strong>选择支付方式：</strong></p>
+                        
+                        <div class="qr-placeholder">
+                            <span style="color: #00ffff;">[支付宝收款码]</span>
+                            <img src="image/bb180bb830150b69b161c33de4bd9cf3_0.png" alt="支付宝收款码" class="qr-image">
+                        </div>
+                        
+                        <div class="qr-placeholder">
+                            <span style="color: #00ffff;">[微信支付码]</span>
+                            <img src="image/bba1fdd8940113ada1432cb3b8632f63.png" alt="微信支付码" class="qr-image">
+                        </div>
+                    </div>
+                    
+                    <div style="text-align: center; border-top: 1px solid #00ff00; padding-top: 10px;">
+                        <p style="font-size: 10px; color: #00ffff;">扫描上方二维码完成支付,完成支付后添加微信： YSZI2013 获取资源地址</p>
+                        <button class="close-btn" onclick="closePaymentModal('payment3')">关闭窗口</button>
+                    </div>
+                </div>
+                
+                <div class="warning-text">
+                    ⚠️ 终极资源，价格反映其价值 ⚠️
+                </div>
+            </div>
+            
+            <div class="contact-info">
+                <p style="color: #00ffff; font-size: 14px; margin-bottom: 10px;">
+                    <span style="color: #ff0000;">▋</span> 矩阵通道 <span style="color: #ff0000;">▋</span> 
+                </p>
+                <p style="font-size: 12px; color: #00ff00;">
+                    <strong>数字通讯：</strong> <span style="color: #00ffff;">YSZI2013</span> 
+                    <span style="font-size: 10px; color: #888;">(微信号 - 连接至数据深渊的密钥)</span>
+                </p>
+            </div>
+        </div>
+    </div>
+    
+    <div class="footer">
+        <p>ENTRY POINT: matrix@shadow-realm.net | QUANTUM ENCRYPTION ENABLED | ACCESS LEVEL: CLASSIFIED</p>
+    </div>
+    
+    <div class="matrix-footer">
+        <p>© 2023 暗影矩阵 · 资源矩阵 | 量子加密保护 | 访问记录已匿名化处理</p>
+    </div>
+
+    <script>
+        // 数字雨效果
+        const canvas = document.getElementById('matrix-canvas');
+        const ctx = canvas.getContext('2d');
+
+        // 设置画布大小
+        function resizeCanvas() {
+            canvas.width = window.innerWidth;
+            canvas.height = window.innerHeight;
+        }
+        resizeCanvas();
+        window.addEventListener('resize', resizeCanvas);
+
+        // 字符集 - 使用数字、字母和一些特殊字符
+        const chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789@#$%^&*()*&^%+-/~{[|`]}01";
+        const charArray = chars.split("");
+
+        // 矩阵雨滴设置
+        const fontSize = 14;
+        const columns = Math.floor(canvas.width / fontSize);
+
+        // 每个雨滴的y坐标
+        const drops = [];
+        for(let x = 0; x < columns; x++) {
+            drops[x] = Math.floor(Math.random() * canvas.height / fontSize);
+        }
+
+        // 绘制函数
+        function draw() {
+            // 半透明黑色背景，产生拖尾效果
+            ctx.fillStyle = 'rgba(0, 0, 0, 0.05)';
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+            // 绿色字体
+            ctx.fillStyle = '#00ff00';
+            ctx.font = fontSize + 'px Courier New';
+
+            // 绘制字符
+            for(let i = 0; i < drops.length; i++) {
+                // 随机选择一个字符
+                const text = charArray[Math.floor(Math.random() * charArray.length)];
+                
+                // 绘制字符
+                ctx.fillText(text, i * fontSize, drops[i] * fontSize);
+                
+                // 重置雨滴位置，如果到达底部或者随机重置
+                if(drops[i] * fontSize > canvas.height && Math.random() > 0.975) {
+                    drops[i] = 0;
+                }
+                
+                drops[i]++;
+            }
+        }
+
+        // 动画循环
+        setInterval(draw, 35);
+
+        // 支付模态框控制脚本
+        function showPaymentModal(modalId) {
+            document.getElementById(modalId).style.display = 'block';
+            // 禁止背景滚动
+            document.body.style.overflow = 'hidden';
+        }
+        
+        function closePaymentModal(modalId) {
+            document.getElementById(modalId).style.display = 'none';
+            // 恢复背景滚动
+            document.body.style.overflow = 'auto';
+        }
+        
+        // 点击模态框外部关闭
+        window.onclick = function(event) {
+            var modals = document.getElementsByClassName('payment-modal');
+            for (var i = 0; i < modals.length; i++) {
+                if (event.target == modals[i]) {
+                    modals[i].style.display = 'none';
+                    document.body.style.overflow = 'auto';
+                }
+            }
+        }
+        
+        // 添加一些黑客风格的动画效果
+        setInterval(function() {
+            var elements = document.getElementsByTagName('span');
+            for (var i = 0; i < elements.length; i++) {
+                if (elements[i].style.color === 'rgb(0, 255, 0)' || elements[i].style.color === '#00ff00') {
+                    elements[i].style.textShadow = '0 0 5px #00ff00';
+                }
+            }
+        }, 2000);
+    </script>
+</body>
+</html>
